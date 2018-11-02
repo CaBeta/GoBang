@@ -1,6 +1,6 @@
 // model
-var model = {
-    init:function(){
+const model = {
+    init(){
         // 八个搜索同色棋子的方向
         this.SEARCH = [[-1, -1], [0, -1], [1, -1], [1, 0],
                         [1, 1], [0, 1], [-1, 1], [-1, 0]];
@@ -13,7 +13,7 @@ var model = {
             this.gridBlack[i] = new Array(15);
         };
     },
-    addPiece:function(){
+    addPiece(){
         if (this.gridWhite[this.x][this.y] != 1 &&
             this.gridBlack[this.x][this.y] != 1) {
             this.turn == "white" ?
@@ -90,8 +90,8 @@ var model = {
 }
 
 // view
-var view = {
-    init:function(){
+const view = {
+    init(){
         this.EDGE = 14 * 30;   // 棋盘边长
         this.MARGIN = 15;      // 棋盘边缘间隙
         this.GRID_LENGTH = 30; // 棋盘格边长
@@ -102,10 +102,10 @@ var view = {
         this.ctx = canvas.getContext('2d');
         this.render();
     },
-    render:function(){
+    render(){
         this.renderBoard();
     },
-    renderBoard:function(){
+    renderBoard(){
         this.ctx.fillStyle = "#ffc369";
         this.ctx.fillRect(this.MARGIN, this.MARGIN, this.EDGE, this.EDGE);//x,y,width,height
         for (var i = 0; i < 15; i++) {
@@ -118,7 +118,7 @@ var view = {
             this.ctx.stroke();
         }
     },
-    renderPiece:function(){
+    renderPiece(){
         const x = octopus.getX() * this.GRID_LENGTH + this.MARGIN;
         const y = octopus.getY() * this.GRID_LENGTH + this.MARGIN;
         this.ctx.beginPath();
@@ -142,8 +142,8 @@ var view = {
     }
 }
 
-var octopus = {
-    init:function(){
+const octopus = {
+    init(){
         model.init();
         view.init();
         document.querySelector('canvas').onclick = function (e) {
@@ -165,16 +165,16 @@ var octopus = {
             }
         }
     },
-    getX:function(){
+    getX(){
         return model.x;
     },
-    getY:function(){
+    getY(){
         return model.y;
     },
-    getTurn:function(){
+    getTurn(){
         return model.turn;
     },
-    check:function(x, y){
+    check(x, y){
         const x_error = (x - view.MARGIN) % view.GRID_LENGTH;
         const y_error = (y - view.MARGIN) % view.GRID_LENGTH;
         if ((x_error < 8 || x_error > 22) &&
@@ -196,9 +196,54 @@ var octopus = {
             // console.log(x + "," + y);
         }
     },
-    gameOver:function(){
+    gameOver(){
         model.turn == 'white' ? console.log('白棋胜利！') : console.log('黑棋胜利！');
 
+    }
+}
+
+const table = {
+    // tuple is empty  0
+    Blank:7,
+    // tuple contains a black chess  1
+    B:35,
+    // tuple contains two black chesses  2
+    BB:800,
+    // tuple contains three black chesses  3
+    BBB:15000,
+    // tuple contains four black chesses  4
+    BBBB: 800000,
+    // tuple contains a white chess  5
+    W: 15,
+    // tuple contains two white chesses  6
+    WW: 400,
+    // tuple contains three white chesses  7
+    WWW: 1800,
+    // tuple contains four white chesses  8
+    WWWW: 100000,
+    // tuple does not exist  9
+    Virtual:0,
+    // tuple contains at least one black and at least one white  10
+    Polluted:0
+}
+
+const ai = {
+    tupleScoreTable:[7, 35, 800, 15000, 800000, 15, 400, 1800, 100000, 0, 0], // 分数表
+    memory:{},
+    /**
+     * 计算得分
+     */
+    calcScore() {
+        // 获取五元组位置信息
+        // 查棋盘
+        // 得出分数
+    },
+    /**
+     * 选择落子位置
+     */
+    choose() {
+        // 比较棋盘上得分
+        // 给出落子坐标
     }
 }
 
