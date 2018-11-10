@@ -1,10 +1,9 @@
 // model
-const model = {
+const model = { 
+    // 八个搜索同色棋子的方向
+    SEARCH:[[-1, -1], [0, -1], [1, -1], [1, 0],[1, 1], [0, 1], [-1, 1], [-1, 0]],
     init(){
-        // 八个搜索同色棋子的方向
-        this.SEARCH = [[-1, -1], [0, -1], [1, -1], [1, 0],
-                        [1, 1], [0, 1], [-1, 1], [-1, 0]];
-        this.turn = "black"; // 轮到黑棋或白棋 默认黑棋先手
+        this.turn = "white"; // 轮到黑棋或白棋 默认黑棋先手
         this.win = 0; // 是否胜利信息
         this.gridBlack = new Array(15); // 黑棋网格
         this.gridWhite = new Array(15); // 白棋网格
@@ -161,7 +160,18 @@ const octopus = {
                     model.searchLine();
                     model.checkWin();
                     model.changeTurn();
-                };
+                    if (ai && model.win!==1) {
+                        const {x,y} = ai.choose();
+                        model.x = x;
+                        model.y = y;
+                        model.addPiece(); 
+                        view.renderPiece();
+                        model.searchLine();
+                        model.checkWin();
+                        model.changeTurn();
+                    }
+                
+                }
             }
         }
     },
@@ -197,8 +207,7 @@ const octopus = {
         }
     },
     gameOver(){
-        model.turn == 'white' ? console.log('白棋胜利！') : console.log('黑棋胜利！');
-
+        model.turn == 'white' ? window.alert('白棋胜利！') : window.alert('黑棋胜利！');
     }
 }
 
@@ -229,21 +238,117 @@ const table = {
 
 const ai = {
     tupleScoreTable:[7, 35, 800, 15000, 800000, 15, 400, 1800, 100000, 0, 0], // 分数表
+    AI_SEARCH: [[1, 1], [0, 1], [-1, 1], [-1, 0]],
     memory:{},
     /**
      * 计算得分
      */
-    calcScore() {
-        // 获取五元组位置信息
+    calcScore(x, y) {
+        // 获得位置
+        const tuples = this.getTuplePostions(x, y);
         // 查棋盘
+        const codes = this.codeingTuple(tuples);
         // 得出分数
+        let scoreSum = 0;
+        for (const code of codes) {
+            if (code === "") {
+                scoreSum += 7;
+                continue;
+            }
+            if (code === "Polluted") {
+                scoreSum += 0;
+                continue;
+            }
+            if (code.indexOf("w") !== -1 && code.indexOf("b") !== -1) {
+                scoreSum += 0;
+                continue;
+            }
+            if (code.indexOf("b") !== -1) {
+                const list = [1, 2, 3, 4];
+                scoreSum += this.tupleScoreTable[list[code.length-1]];
+                
+            }
+            if (code.indexOf("w") !== -1) {
+                const list = [5, 6, 7, 8];
+                scoreSum += this.tupleScoreTable[list[code.length-1]];
+            }
+        }
+        return scoreSum;
+    },
+    // 获取五元组位置信息
+    getTuplePostions(x, y) {
+        let tuples = [];
+        for (const search of this.AI_SEARCH) {
+            const piece = { x, y };
+            const tuple = [];
+            for (let i = 0; i < 5; i++) {
+                const fivePiece = [];
+                const firstPiece = {
+                    x: piece.x + i * search[0],
+                    y: piece.y + i * search[1]
+                };
+                for (let j = 0; j < 5; j++) {
+                    const _piece = {
+                        x: firstPiece.x - j * search[0],
+                        y: firstPiece.y - j * search[1]
+                    };
+                    fivePiece.push(_piece);
+                }
+                // 一个方向的五元组
+                tuple.push(fivePiece);
+            }
+            // 这个位置的所有五元组
+            tuples.push(tuple);
+        }
+        return tuples;
+    },
+    // 查棋盘编码
+    codeingTuple(tuples){
+        const codes = [];
+        for (const tuple of tuples) {
+            for (const fivePiece of tuple) {
+                let code = "";
+                for (const piece of fivePiece) {
+                    const { x, y } = piece;
+                    if (x > 14 || y > 14 || x < 0 || y < 0) {
+                        code = "Polluted";
+                        break;
+                    }
+                    const white = model.gridWhite[x][y];
+                    const black = model.gridBlack[x][y];
+                    if (white) {
+                        code += "w";
+                    }
+                    if (black) {
+                        code += "b";
+                    }
+                }
+                codes.push(code);
+            }
+        }
+        return codes;
     },
     /**
      * 选择落子位置
      */
     choose() {
         // 比较棋盘上得分
+        let max = 0;
+        let choose;
+        for (let i = 0; i < 15; i++) {
+            for (let j = 0; j < 15; j++) {
+                if (model.gridBlack[i][j] || model.gridWhite[i][j]) {
+                    continue;
+                }
+                const score = this.calcScore(i, j);
+                if (score>max) {
+                    max = score;
+                    choose = {x:i, y:j};
+                }
+            }
+        }
         // 给出落子坐标
+        return choose;
     }
 }
 
